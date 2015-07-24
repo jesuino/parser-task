@@ -8,6 +8,8 @@ import static org.jbpm.process.workitem.parser.ParserHelper.convertXMLToObject;
 import java.util.HashMap;
 import java.util.Map;
 
+import javax.xml.bind.JAXBException;
+
 import org.jbpm.process.workitem.AbstractLogOrThrowWorkItemHandler;
 import org.kie.api.runtime.process.WorkItem;
 import org.kie.api.runtime.process.WorkItemManager;
@@ -22,29 +24,33 @@ import org.kie.api.runtime.process.WorkItemManager;
  */
 public class Parser extends AbstractLogOrThrowWorkItemHandler {
 
-	private static final String JSON = "JSON";
-	private static final String XML = "XML";
+	public static final String JSON = "JSON";
+	public static final String XML = "XML";
 	/**
 	 * Only supports JSON or XML.
 	 */
-	private final String FORMAT = "Format";
+	public static final String FORMAT = "Format";
 	/**
 	 * The target object type full qualified name (com.acme.Customer) TODO:
 	 * could this be removed?
 	 * 
 	 */
-	private final String TYPE = "Type";
+	public static final String TYPE = "Type";
 	/**
 	 * The input object of type TYPE or String (if you set toObject)
 	 */
-	private final String INPUT = "Input";
+	public static final String INPUT = "Input";
 	/**
 	 * The resulting object or String (if toObject is false it will be a
 	 * String).
 	 */
-	private final String RESULT = "Result";
+	public static final String RESULT = "Result";
 
 	private ClassLoader cl;
+
+	public Parser() {
+		this.cl = this.getClass().getClassLoader();
+	}
 
 	public Parser(ClassLoader cl) {
 		this.cl = cl;
@@ -85,8 +91,14 @@ public class Parser extends AbstractLogOrThrowWorkItemHandler {
 						e);
 			}
 		} else if (XML.equals(format.toUpperCase())) {
-			result = toObject ? convertXMLToObject(input.toString(), type)
-					: convertToXML(input);
+			try {
+				result = toObject ? convertXMLToObject(input.toString(), type)
+						: convertToXML(input);
+			} catch (JAXBException e) {
+				throw new Error(
+						"Error parsing to XML. Check the input format or the output object",
+						e);
+			}
 		}
 		results.put(RESULT, result);
 		wim.completeWorkItem(wi.getId(), results);

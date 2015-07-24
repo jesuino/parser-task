@@ -5,6 +5,9 @@ import java.io.StringReader;
 import java.io.StringWriter;
 
 import javax.xml.bind.JAXB;
+import javax.xml.bind.JAXBContext;
+import javax.xml.bind.JAXBException;
+import javax.xml.bind.Marshaller;
 
 import com.fasterxml.jackson.core.JsonParseException;
 import com.fasterxml.jackson.core.JsonProcessingException;
@@ -20,9 +23,12 @@ public class ParserHelper {
 		return JAXB.unmarshal(new StringReader(input), type);
 	}
 
-	public static String convertToXML(Object input) {
-		StringWriter result = new StringWriter();
-		JAXB.marshal(input, result);
+	public static String convertToXML(Object input) throws JAXBException {
+		StringWriter result = new StringWriter();	
+		JAXBContext jaxbContext = JAXBContext.newInstance(input.getClass());
+		Marshaller jaxbMarshaller = jaxbContext.createMarshaller();
+		jaxbMarshaller.setProperty(Marshaller.JAXB_FORMATTED_OUTPUT, false);
+		jaxbMarshaller.marshal(input, result);
 		return result.toString();
 	}
 	
