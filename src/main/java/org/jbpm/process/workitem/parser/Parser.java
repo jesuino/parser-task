@@ -1,15 +1,20 @@
 package org.jbpm.process.workitem.parser;
 
-import static org.jbpm.process.workitem.parser.ParserHelper.convertJSONToObject;
-import static org.jbpm.process.workitem.parser.ParserHelper.convertToJSON;
-import static org.jbpm.process.workitem.parser.ParserHelper.convertToXML;
-import static org.jbpm.process.workitem.parser.ParserHelper.convertXMLToObject;
-
+import java.io.IOException;
+import java.io.StringReader;
+import java.io.StringWriter;
 import java.util.HashMap;
 import java.util.Map;
 
+import javax.xml.bind.JAXB;
+import javax.xml.bind.JAXBContext;
 import javax.xml.bind.JAXBException;
+import javax.xml.bind.Marshaller;
 
+import org.codehaus.jackson.JsonGenerationException;
+import org.codehaus.jackson.JsonParseException;
+import org.codehaus.jackson.map.JsonMappingException;
+import org.codehaus.jackson.map.ObjectMapper;
 import org.jbpm.process.workitem.AbstractLogOrThrowWorkItemHandler;
 import org.kie.api.runtime.process.WorkItem;
 import org.kie.api.runtime.process.WorkItemManager;
@@ -102,5 +107,27 @@ public class Parser extends AbstractLogOrThrowWorkItemHandler {
 		}
 		results.put(RESULT, result);
 		wim.completeWorkItem(wi.getId(), results);
+	}
+	
+
+	private Object convertXMLToObject(String input, Class<?> type) {
+		return JAXB.unmarshal(new StringReader(input), type);
+	}
+
+	private String convertToXML(Object input) throws JAXBException {
+		StringWriter result = new StringWriter();	
+		JAXBContext jaxbContext = JAXBContext.newInstance(input.getClass());
+		Marshaller jaxbMarshaller = jaxbContext.createMarshaller();
+		jaxbMarshaller.setProperty(Marshaller.JAXB_FORMATTED_OUTPUT, false);
+		jaxbMarshaller.marshal(input, result);
+		return result.toString();
+	}
+	
+	private Object convertJSONToObject(String input, Class<?> type) throws JsonParseException, JsonMappingException, IOException {		
+		return new ObjectMapper().readValue(input, type);
+	}
+
+	private Object convertToJSON(Object input) throws JsonGenerationException, JsonMappingException, IOException {
+		return new ObjectMapper().writeValueAsString(input);
 	}
 }
